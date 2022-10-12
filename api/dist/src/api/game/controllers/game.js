@@ -10,6 +10,7 @@ const strapi_1 = require("@strapi/strapi");
 const axios_1 = __importDefault(require("axios"));
 const jsdom_1 = __importDefault(require("jsdom"));
 const slugify_1 = __importDefault(require("slugify"));
+const form_data_1 = __importDefault(require("form-data"));
 const getByName = async (name, entityName) => {
     const item = await strapi.entityService.findMany(`api::${entityName}.${entityName}`, {
         filters: { name },
@@ -33,7 +34,7 @@ const createGame = async (products, entityName) => {
         var _a;
         const item = await getByName(product.title, "game");
         if (!item) {
-            await strapi.entityService.create(`api::${entityName}.${entityName}`, {
+            const game = await strapi.entityService.create(`api::${entityName}.${entityName}`, {
                 data: {
                     name: product.title,
                     slug: product.slug.replace(/-/g, "_"),
@@ -48,6 +49,16 @@ const createGame = async (products, entityName) => {
                     ...(await getGameInfo(product.slug.replace(/-/g, "_"))),
                 },
             });
+            console.log(products[0]);
+            await setImage({ image: product.coverHorizontal, game });
+            await Promise.all(product.screenshots
+                .slice(0, 5)
+                .map((image) => setImage({
+                image: image.replace("_{formatter}", ""),
+                game,
+                field: "gallery",
+            })));
+            return game;
         }
     }));
 };
@@ -120,10 +131,28 @@ const createManyToManyData = async (products) => {
         ]);
     });
 };
+const setImage = async ({ image, game, field = "cover" }) => {
+    const url = image;
+    const { data } = await axios_1.default.get(url, { responseType: "arraybuffer" });
+    const buffer = Buffer.from(data, "base64");
+    const formData = new form_data_1.default();
+    formData.append("refId", game.id);
+    formData.append("ref", "api::game.game");
+    formData.append("field", field);
+    formData.append("files", buffer, { filename: `${game.slug}.jpg` });
+    console.log(`Uploading ${field} image: ${game.slug}.jpg`);
+    await (0, axios_1.default)({
+        method: "POST",
+        url: `http://${strapi.config.host}:${strapi.config.port}/api/upload`,
+        data: formData,
+        headers: {
+            "Content-Type": `multipart/form-data`,
+        },
+    });
+};
 exports.default = strapi_1.factories.createCoreController("api::game.game", ({ strapi }) => ({
     populate: async (ctx) => {
         const products = await getProductsInfo();
-        console.log(products[0]);
         await createManyToManyData(products);
         await createGame(products, "game");
         return ctx.send("Finished populating!");

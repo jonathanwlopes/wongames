@@ -6,6 +6,7 @@ import { factories } from "@strapi/strapi";
 import axios from "axios";
 import jsdom from "jsdom";
 import slugify from "slugify";
+import FormData from "form-data";
 
 const getByName = async (name: string, entityName: string) => {
   const item = await strapi.entityService.findMany(
@@ -38,31 +39,49 @@ const createGame = async (products, entityName: string) => {
       const item = await getByName(product.title, "game");
 
       if (!item) {
-        await strapi.entityService.create(`api::${entityName}.${entityName}`, {
-          data: {
-            name: product.title,
-            slug: product.slug.replace(/-/g, "_"),
-            price: product.price.finalMoney.amount ?? 0,
-            release_date: new Date(product.releaseDate)
-              .toISOString()
-              .slice(0, 10),
-            categories: await Promise.all(
-              product.genres.map((genre) => getByName(genre.name, "category"))
-            ),
-            plataforms: await Promise.all(
-              product.operatingSystems.map((operatingSystem) =>
-                getByName(operatingSystem, "plataform")
-              )
-            ),
-            developers: await Promise.all(
-              product.developers.map((name) => getByName(name, "developer"))
-            ),
-            publishers: await Promise.all(
-              product.publishers.map((name) => getByName(name, "publisher"))
-            ),
-            ...(await getGameInfo(product.slug.replace(/-/g, "_"))),
-          },
-        });
+        const game = await strapi.entityService.create(
+          `api::${entityName}.${entityName}`,
+          {
+            data: {
+              name: product.title,
+              slug: product.slug.replace(/-/g, "_"),
+              price: product.price.finalMoney.amount ?? 0,
+              release_date: new Date(product.releaseDate)
+                .toISOString()
+                .slice(0, 10),
+              categories: await Promise.all(
+                product.genres.map((genre) => getByName(genre.name, "category"))
+              ),
+              plataforms: await Promise.all(
+                product.operatingSystems.map((operatingSystem) =>
+                  getByName(operatingSystem, "plataform")
+                )
+              ),
+              developers: await Promise.all(
+                product.developers.map((name) => getByName(name, "developer"))
+              ),
+              publishers: await Promise.all(
+                product.publishers.map((name) => getByName(name, "publisher"))
+              ),
+              ...(await getGameInfo(product.slug.replace(/-/g, "_"))),
+            },
+          }
+        );
+
+        console.log(products[0]);
+        await setImage({ image: product.coverHorizontal, game });
+        await Promise.all(
+          product.screenshots
+            .slice(0, 5)
+            .map((image) =>
+              setImage({
+                image: image.replace("_{formatter}", ""),
+                game,
+                field: "gallery",
+              })
+            )
+        );
+        return game;
       }
     })
   );
@@ -151,12 +170,34 @@ const createManyToManyData = async (products) => {
   });
 };
 
+const setImage = async ({ image, game, field = "cover" }) => {
+  const url = image;
+  const { data } = await axios.get(url, { responseType: "arraybuffer" });
+  const buffer = Buffer.from(data, "base64");
+
+  const formData = new FormData();
+  formData.append("refId", game.id);
+  formData.append("ref", "api::game.game");
+  formData.append("field", field);
+  formData.append("files", buffer, { filename: `${game.slug}.jpg` });
+
+  console.log(`Uploading ${field} image: ${game.slug}.jpg`);
+
+  await axios({
+    method: "POST",
+    url: `http://${strapi.config.host}:${strapi.config.port}/api/upload`,
+    data: formData,
+    headers: {
+      "Content-Type": `multipart/form-data`,
+    },
+  });
+};
+
 export default factories.createCoreController(
   "api::game.game",
   ({ strapi }) => ({
     populate: async (ctx) => {
       const products = await getProductsInfo();
-      console.log(products[0]);
       await createManyToManyData(products);
       await createGame(products, "game");
 
