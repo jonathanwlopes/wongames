@@ -16,7 +16,7 @@ const wrapperModifiers = {
     &::after {
       content: '';
       position: absolute;
-      left: 0;
+      left: 0; 
       bottom: 0;
       width: 5rem;
       border-bottom: 0.4rem solid ${theme.colors.primary};
