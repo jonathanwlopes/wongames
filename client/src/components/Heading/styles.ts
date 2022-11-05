@@ -1,14 +1,42 @@
 import styled, { css, DefaultTheme } from 'styled-components'
 import media from 'styled-media-query'
-import { HeadingProps } from '.'
+import { HeadingProps, LineColors } from '.'
 
 const wrapperModifiers = {
-  lineLeft: (theme: DefaultTheme) => css`
-    padding-left: ${theme.spacings.xxsmall};
-    border-left: 0.7rem solid ${theme.colors.secondary};
+  small: (theme: DefaultTheme) => css`
+    font-size: ${theme.spacings.small};
+
+    &::after {
+      width: 3rem;
+    }
+
+    ${media.greaterThan('medium')`
+      font-size: ${theme.spacings.xsmall};
+    `};
   `,
 
-  lineBottom: (theme: DefaultTheme) => css`
+  medium: (theme: DefaultTheme) => css`
+    font-size: ${theme.spacings.medium};
+
+    ${media.greaterThan('medium')`
+      font-size: ${theme.spacings.small};
+    `};
+  `,
+
+  large: (theme: DefaultTheme) => css`
+    font-size: ${theme.spacings.large};
+
+    ${media.greaterThan('medium')`
+      font-size: ${theme.spacings.medium};
+    `};
+  `,
+
+  lineLeft: (theme: DefaultTheme, lineColor: LineColors) => css`
+    padding-left: ${theme.spacings.xxsmall};
+    border-left: 0.7rem solid ${theme.colors[lineColor]};
+  `,
+
+  lineBottom: (theme: DefaultTheme, lineColor: LineColors) => css`
     position: relative;
     display: inline-block;
     margin-bottom: ${theme.spacings.medium};
@@ -16,25 +44,21 @@ const wrapperModifiers = {
     &::after {
       content: '';
       position: absolute;
-      left: 0; 
+      left: 0;
       bottom: 0;
       width: 5rem;
-      border-bottom: 0.4rem solid ${theme.colors.primary};
+      border-bottom: 0.4rem solid ${theme.colors[lineColor]};
     }
   `
 }
 
 export const Wrapper = styled.h2<Omit<HeadingProps, 'children'>>`
-  ${({ theme, color, lineLeft, lineBottom }) => css`
-    font-size: ${theme.font.sizes.xlarge};
+  ${({ theme, color, lineLeft, lineBottom, lineColor, size }) => css`
     color: ${theme.colors[color!]};
     user-select: none;
 
-    ${lineLeft && wrapperModifiers.lineLeft(theme)};
-    ${lineBottom && wrapperModifiers.lineBottom(theme)};
-
-    ${media.greaterThan('medium')`
-      font-size: ${theme.font.sizes.xxlarge};
-    `}
+    ${lineLeft && wrapperModifiers.lineLeft(theme, lineColor!)};
+    ${lineBottom && wrapperModifiers.lineBottom(theme, lineColor!)};
+    ${!!size && wrapperModifiers[size](theme)}
   `}
 `
