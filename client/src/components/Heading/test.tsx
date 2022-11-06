@@ -34,10 +34,10 @@ describe('<Heading />', () => {
     )
   })
 
-  it('should render a heading with a small size', () => {
+  it('should render a heading with a xxsmall size', () => {
     renderWithTheme(<Heading size="small">Won Games</Heading>)
     expect(screen.getByRole('heading')).toHaveStyle({
-      'font-size': '2.4rem'
+      'font-size': '1.6rem'
     })
     expect(screen.getByRole('heading', { name: /won games/i })).toHaveStyleRule(
       'width',

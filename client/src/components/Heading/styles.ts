@@ -4,21 +4,17 @@ import { HeadingProps, LineColors } from '.'
 
 const wrapperModifiers = {
   small: (theme: DefaultTheme) => css`
-    font-size: ${theme.spacings.small};
+    font-size: ${theme.spacings.xsmall};
 
     &::after {
       width: 3rem;
     }
-
-    ${media.greaterThan('medium')`
-      font-size: ${theme.spacings.xsmall};
-    `};
   `,
 
   medium: (theme: DefaultTheme) => css`
     font-size: ${theme.spacings.medium};
 
-    ${media.greaterThan('medium')`
+    ${media.lessThan('medium')`
       font-size: ${theme.spacings.small};
     `};
   `,
@@ -26,7 +22,7 @@ const wrapperModifiers = {
   large: (theme: DefaultTheme) => css`
     font-size: ${theme.spacings.large};
 
-    ${media.greaterThan('medium')`
+    ${media.lessThan('medium')`
       font-size: ${theme.spacings.medium};
     `};
   `,
