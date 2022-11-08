@@ -59,7 +59,8 @@ exports[`<Banner /> should render correctly 1`] = `
 }
 
 .c4 {
-  color: #FAFAFA font-size:1.4rem;
+  color: #FAFAFA;
+  font-size: 1.4rem;
   font-wight: 400;
   margin-bottom: 1.6rem;
 }
@@ -67,6 +68,10 @@ exports[`<Banner /> should render correctly 1`] = `
 .c4 strong {
   color: #F231A5;
   font-weight: 600;
+}
+
+@media (max-width:1170px) {
+
 }
 
 @media (min-width:768px) {
