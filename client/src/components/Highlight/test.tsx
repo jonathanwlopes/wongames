@@ -1,0 +1,76 @@
+import { screen } from '@testing-library/react'
+import { renderWithTheme } from 'utils/tests/helpers'
+
+import Highlight from '.'
+import * as S from './styles'
+
+const props = {
+  title: 'Heading 1',
+  subtitle: 'Heading 2',
+  bgImage: '/img/red-dead-background.png',
+  buttonLabel: 'Buy now',
+  buttonLink: '/rdr2'
+}
+
+describe('<Highlight />', () => {
+  it('should render the headings and button', () => {
+    renderWithTheme(<Highlight {...props} />)
+
+    expect(
+      screen.getByRole('heading', { name: /heading 1/i })
+    ).toBeInTheDocument()
+
+    expect(
+      screen.getByRole('heading', { name: /heading 2/i })
+    ).toBeInTheDocument()
+
+    expect(screen.getByRole('link', { name: /buy now/i })).toBeInTheDocument()
+  })
+
+  it('should render background image', () => {
+    const { container } = renderWithTheme(<Highlight {...props} />)
+
+    expect(container.firstChild).toHaveStyle({
+      backgroundImage: `url(${props.bgImage})`
+    })
+  })
+
+  it('should render float image', () => {
+    renderWithTheme(
+      <Highlight {...props} floatImage="/img/red-dead-float.png" />
+    )
+
+    expect(screen.getByRole('img', { name: props.title })).toHaveAttribute(
+      'src',
+      '/img/red-dead-float.png'
+    )
+  })
+
+  it('should render right align by default', () => {
+    const { container } = renderWithTheme(<Highlight {...props} />)
+
+    expect(container.firstChild).toHaveStyleRule(
+      'grid-template-areas',
+      "'floatimage content'"
+    )
+
+    expect(container.firstChild).toHaveStyleRule('text-align', 'right', {
+      modifier: `${S.Content}`
+    })
+  })
+
+  it('should render left align', () => {
+    const { container } = renderWithTheme(
+      <Highlight alignment="left" {...props} />
+    )
+
+    expect(container.firstChild).toHaveStyleRule(
+      'grid-template-areas',
+      "'content floatimage'"
+    )
+
+    expect(container.firstChild).toHaveStyleRule('text-align', 'left', {
+      modifier: `${S.Content}`
+    })
+  })
+})
